@@ -38,12 +38,22 @@
 | Closed (resolved) issues | [![GitHub closed issues](https://img.shields.io/github/issues-closed/Vexxo-Dev/wpclone_cli?color=green)](https://github.com/Vexxo-Dev/wpclone_cli/issues?q=is%3Aissue+is%3Aclosed) |
 | Stars (people using it) | [![GitHub stars](https://img.shields.io/github/stars/Vexxo-Dev/wpclone_cli)](https://github.com/Vexxo-Dev/wpclone_cli/stargazers) |
 
-> 💬 **Ran a successful migration?** [Tell us about it in Discussions!](https://github.com/Vexxo-Dev/wpclone_cli/discussions/new?category=show-and-tell)
-> We love hearing which sites you've migrated. It helps others trust the tool.
+> 💬 **Ran a successful migration?** [Tell us about it in Discussions!](https://github.com/Vexxo-Dev/wpclone_cli/discussions)
+> If the "new discussion" page returns 404, see the troubleshooting guide: [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ---
 
 ## 📦 Requirements
+
+---
+
+## 📚 Documentation (GitHub Pages)
+
+Project docs are available in the `docs/` folder and can be published with GitHub Pages.
+
+- Docs entry page: [docs/index.md](docs/index.md)
+- Publishing instructions: [docs/publishing.md](docs/publishing.md)
+- Troubleshooting: [docs/troubleshooting.md](docs/troubleshooting.md)
 
 ### On your local machine (where you run `wpclone`):
 - `bash` ≥ 4.0

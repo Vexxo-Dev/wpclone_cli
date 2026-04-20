@@ -1,0 +1,15 @@
+title: wpclone
+description: WordPress migration CLI using SSH, rsync, and WP-CLI
+theme: minima
+markdown: kramdown
+
+plugins:
+  - jekyll-seo-tag
+
+header_pages:
+  - index.md
+  - getting-started.md
+  - usage.md
+  - config-file.md
+  - publishing.md
+  - troubleshooting.md
