@@ -1,0 +1,57 @@
+# =============================================================================
+# wpclone — Example Configuration File
+# Copy this to migration.conf and fill in your values.
+# Usage: wpclone --config migration.conf
+# =============================================================================
+
+# ── Source Server ─────────────────────────────────────────────────────────────
+# SSH connection string: user@hostname or user@IP
+SRC_HOST=deploy@old-server.example.com
+
+# Absolute path to the WordPress root on the source server
+SRC_PATH=/var/www/html
+
+# SSH port (default: 22)
+SRC_PORT=22
+
+# Path to SSH private key (leave blank to use default ~/.ssh/id_rsa)
+SRC_KEY=
+
+# ── Destination Server ────────────────────────────────────────────────────────
+DST_HOST=deploy@new-server.example.com
+DST_PATH=/var/www/html
+DST_PORT=22
+DST_KEY=
+
+# ── URL Replacement ───────────────────────────────────────────────────────────
+# The old site URL (must match what WordPress has stored in the database)
+OLD_URL=https://old-site.example.com
+
+# The new site URL
+NEW_URL=https://new-site.example.com
+
+# ── Database Method ───────────────────────────────────────────────────────────
+# wpcli    — Uses WP-CLI (recommended, handles serialized PHP safely)
+# mysqldump — Falls back to mysqldump if WP-CLI is not available
+DB_METHOD=wpcli
+
+# ── Skip Flags ────────────────────────────────────────────────────────────────
+# Set to 1 to skip the respective step
+SKIP_FILES=0
+SKIP_DB=0
+SKIP_URL_REPLACE=0
+
+# ── Rsync Excludes ────────────────────────────────────────────────────────────
+# Add one EXCLUDE line per pattern to exclude from the file transfer.
+# The following defaults are always excluded (no need to add them here):
+#   .git, wp-content/cache, wp-content/upgrade, *.log
+#
+# EXCLUDE=wp-content/uploads/large-video-folder
+# EXCLUDE=wp-content/plugins/some-plugin
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+# Set to 1 to enable verbose rsync output
+VERBOSE=0
+
+# Set to 1 to simulate migration without making any changes
+DRY_RUN=0

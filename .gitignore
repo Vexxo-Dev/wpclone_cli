@@ -1,0 +1,25 @@
+# ── Git ───────────────────────────────────────────────────────────────────────
+.git/
+
+# ── Local config files (don't commit real server creds) ──────────────────────
+migration.conf
+staging.conf
+production.conf
+*.conf
+!migration.conf.example
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+wpclone.log
+
+# ── Temp / OS files ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ── Editor directories ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
