@@ -1,4 +1,4 @@
-# wpclone — WordPress Site Migration Tool
+# WPClone — WordPress Site Migration Tool
 
 > **One-command WordPress migration** between servers using SSH, rsync, and WP-CLI.
 
@@ -6,9 +6,9 @@
 [![Shell](https://img.shields.io/badge/shell-bash-blue.svg)](https://www.gnu.org/software/bash/)
 [![Status](https://img.shields.io/badge/status-early%20development-orange.svg)]()
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![GitHub issues](https://img.shields.io/github/issues/youruser/wpclone)](https://github.com/youruser/wpclone/issues)
-[![GitHub stars](https://img.shields.io/github/stars/youruser/wpclone?style=flat)](https://github.com/youruser/wpclone/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/youruser/wpclone?style=flat)](https://github.com/youruser/wpclone/network)
+[![GitHub issues](https://img.shields.io/github/issues/Vexxo-Dev/wpclone_cli)](https://github.com/Vexxo-Dev/wpclone_cli/issues)
+[![GitHub stars](https://img.shields.io/github/stars/Vexxo-Dev/wpclone_cli?style=flat)](https://github.com/Vexxo-Dev/wpclone_cli/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Vexxo-Dev/wpclone_cli?style=flat)](https://github.com/Vexxo-Dev/wpclone_cli/network)
 
 ---
 
@@ -33,12 +33,12 @@
 
 | Metric | Badge |
 |---|---|
-| Total migrations run | [![GitHub Discussions](https://img.shields.io/github/discussions/youruser/wpclone?label=migrations%20shared)](https://github.com/youruser/wpclone/discussions) |
-| Open issues / bug reports | [![GitHub issues](https://img.shields.io/github/issues/youruser/wpclone)](https://github.com/youruser/wpclone/issues) |
-| Closed (resolved) issues | [![GitHub closed issues](https://img.shields.io/github/issues-closed/youruser/wpclone?color=green)](https://github.com/youruser/wpclone/issues?q=is%3Aissue+is%3Aclosed) |
-| Stars (people using it) | [![GitHub stars](https://img.shields.io/github/stars/youruser/wpclone)](https://github.com/youruser/wpclone/stargazers) |
+| Total migrations run | [![GitHub Discussions](https://img.shields.io/github/discussions/Vexxo-Dev/wpclone_cli?label=migrations%20shared)](https://github.com/Vexxo-Dev/wpclone_cli/discussions) |
+| Open issues / bug reports | [![GitHub issues](https://img.shields.io/github/issues/Vexxo-Dev/wpclone_cli)](https://github.com/Vexxo-Dev/wpclone_cli/issues) |
+| Closed (resolved) issues | [![GitHub closed issues](https://img.shields.io/github/issues-closed/Vexxo-Dev/wpclone_cli?color=green)](https://github.com/Vexxo-Dev/wpclone_cli/issues?q=is%3Aissue+is%3Aclosed) |
+| Stars (people using it) | [![GitHub stars](https://img.shields.io/github/stars/Vexxo-Dev/wpclone_cli)](https://github.com/Vexxo-Dev/wpclone_cli/stargazers) |
 
-> 💬 **Ran a successful migration?** [Tell us about it in Discussions!](https://github.com/youruser/wpclone/discussions/new?category=show-and-tell)
+> 💬 **Ran a successful migration?** [Tell us about it in Discussions!](https://github.com/Vexxo-Dev/wpclone_cli/discussions/new?category=show-and-tell)
 > We love hearing which sites you've migrated. It helps others trust the tool.
 
 ---
@@ -71,7 +71,7 @@
 Run wpclone directly from GitHub — no installation, no `git clone`:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/youruser/wpclone/main/wpclone.sh) \
+bash <(curl -fsSL https://raw.githubusercontent.com/Vexxo-Dev/wpclone_cli/main/wpclone.sh) \
   --src-host deploy@old-server.com \
   --src-path /var/www/html \
   --dst-host deploy@new-server.com \
@@ -84,7 +84,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/youruser/wpclone/main/wpclon
 
 ```bash
 # Download and make executable
-curl -fsSL https://raw.githubusercontent.com/youruser/wpclone/main/wpclone.sh -o wpclone
+curl -fsSL https://raw.githubusercontent.com/Vexxo-Dev/wpclone_cli/main/wpclone.sh -o wpclone
 chmod +x wpclone
 
 # Optional: install system-wide
@@ -252,7 +252,7 @@ DRY_RUN=0
 
 ## 🐛 Bug Reports & Support
 
-Ran into a problem? Please [open a GitHub Issue](https://github.com/youruser/wpclone/issues/new/choose) and include:
+Ran into a problem? Please [open a GitHub Issue](https://github.com/Vexxo-Dev/wpclone_cli/issues/new/choose) and include:
 
 | Field | What to include |
 |---|---|
@@ -271,9 +271,9 @@ Ran into a problem? Please [open a GitHub Issue](https://github.com/youruser/wpc
 > Then attach `debug.log` and `wpclone.log` to your issue.
 
 **Quick links:**
-- 🐛 [Report a bug](https://github.com/youruser/wpclone/issues/new?template=bug_report.md)
-- 💡 [Request a feature](https://github.com/youruser/wpclone/issues/new?template=feature_request.md)
-- 💬 [Start a discussion](https://github.com/youruser/wpclone/discussions)
+- 🐛 [Report a bug](https://github.com/Vexxo-Dev/wpclone_cli/issues/new?template=bug_report.md)
+- 💡 [Request a feature](https://github.com/Vexxo-Dev/wpclone_cli/issues/new?template=feature_request.md)
+- 💬 [Start a discussion](https://github.com/Vexxo-Dev/wpclone_cli/discussions)
 
 ---
 
