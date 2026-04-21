@@ -1,0 +1,459 @@
+# Config File (/docs/config-file)
+
+
+
+Use a config file to make migrations repeatable.
+
+## Create config [#create-config]
+
+```bash
+cp migration.conf.example migration.conf
+```
+
+## Run with config [#run-with-config]
+
+```bash
+./wpclone --config migration.conf
+```
+
+## Example [#example]
+
+```ini
+SRC_HOST=deploy@old-server.com
+SRC_PATH=/var/www/html
+DST_HOST=deploy@new-server.com
+DST_PATH=/var/www/html
+OLD_URL=https://old-site.com
+NEW_URL=https://new-site.com
+DB_METHOD=wpcli
+VERBOSE=0
+DRY_RUN=0
+```
+
+## Notes [#notes]
+
+* Use `key=value` format.
+* Lines starting with `#` are comments.
+* `EXCLUDE` can be repeated for multiple patterns.
+* Unknown keys are ignored with warning output.
+
+
+# FAQ (/docs/faq)
+
+
+
+## Is wpclone production ready? [#is-wpclone-production-ready]
+
+It is usable for real migrations, but always run dry-run first and validate on staging before production.
+
+## Can I migrate files only? [#can-i-migrate-files-only]
+
+Yes.
+
+```bash
+./wpclone --config migration.conf --skip-db
+```
+
+## Can I migrate database only? [#can-i-migrate-database-only]
+
+Yes.
+
+```bash
+./wpclone --config migration.conf --skip-files
+```
+
+## Can I skip URL replacement? [#can-i-skip-url-replacement]
+
+Yes.
+
+```bash
+./wpclone --config migration.conf --skip-url-replace
+```
+
+## Where are logs saved? [#where-are-logs-saved]
+
+Default is `./wpclone.log` unless changed with `WPCLONE_LOG`.
+
+
+# Getting Started (/docs/getting-started)
+
+
+
+## Requirements [#requirements]
+
+Local machine:
+
+* Bash 4+
+* ssh
+* rsync
+* scp
+
+Source server:
+
+* SSH access
+* WP-CLI recommended, or mysqldump
+
+Destination server:
+
+* SSH access
+* WP-CLI recommended, or mysql
+* Existing WordPress installation
+
+## Run from GitHub (one-liner) [#run-from-github-one-liner]
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Vexxo-Dev/wpclone_cli/main/wpclone.sh) \
+  --src-host deploy@old-server.com \
+  --src-path /var/www/html \
+  --dst-host deploy@new-server.com \
+  --dst-path /var/www/html \
+  --old-url https://old-site.com \
+  --new-url https://new-site.com
+```
+
+## Install locally [#install-locally]
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Vexxo-Dev/wpclone_cli/main/wpclone.sh -o wpclone
+chmod +x wpclone
+sudo mv wpclone /usr/local/bin/wpclone
+wpclone --version
+```
+
+## First safe run [#first-safe-run]
+
+```bash
+./wpclone --config migration.conf --dry-run
+```
+
+After validating output, run the same command without `--dry-run`.
+
+
+# wpclone Documentation (/docs)
+
+
+
+
+
+Welcome to the official documentation for wpclone.
+
+wpclone is a Bash CLI that automates WordPress migration between servers using SSH, rsync, and WP-CLI (with mysqldump/mysql fallback).
+
+## What you can do with wpclone [#what-you-can-do-with-wpclone]
+
+* Sync files
+* Export and import database
+* Replace old URL with new URL
+* Validate first with dry run
+
+## Quick Start [#quick-start]
+
+Run this first to validate your migration safely:
+
+```bash
+./wpclone --config migration.conf --dry-run
+```
+
+Then run the same command without dry run.
+
+## Documentation [#documentation]
+
+<Cards className="gap-x-5 gap-y-4 md:gap-x-6 md:gap-y-5">
+  <Card icon="<BookOpen />" title="Getting Started" href="/docs/getting-started">
+    Install prerequisites and run your first dry-run migration safely.
+  </Card>
+
+  <Card icon="<Compass />" title="Usage" href="/docs/usage">
+    Learn the complete command flow, flags, and recommended execution order.
+  </Card>
+
+  <Card icon="<Settings />" title="Config File" href="/docs/config-file">
+    Understand every key in migration.conf with real-world examples.
+  </Card>
+
+  <Card icon="<GitCompareArrows />" title="Migration Flow" href="/docs/migration-flow">
+    Follow a repeatable step-by-step process from source to destination.
+  </Card>
+
+  <Card icon="<Shield />" title="Security" href="/docs/security-best-practices">
+    Apply practical hardening and least-privilege patterns for production.
+  </Card>
+
+  <Card icon="<Wrench />" title="Troubleshooting" href="/docs/troubleshooting">
+    Resolve common SSH, rsync, database, and URL replacement issues quickly.
+  </Card>
+
+  <Card icon="<CircleHelp />" title="FAQ" href="/docs/faq">
+    Find direct answers for migration edge cases and operational questions.
+  </Card>
+
+  <Card icon="<MessageSquare />" title="Support and Discussions" href="/docs/support">
+    Get help, share success stories, and ask migration-specific questions.
+  </Card>
+
+  <Card icon="<FolderGit2 />" title="GitHub Repository" href="https://github.com/Vexxo-Dev/wpclone_cli">
+    Browse source code, releases, and contribution guidelines.
+  </Card>
+
+  <Card icon="<MessagesSquare />" title="Discussions" href="https://github.com/Vexxo-Dev/wpclone_cli/discussions">
+    Open or join community discussions around workflow and troubleshooting.
+  </Card>
+</Cards>
+
+## Recommended migration sequence [#recommended-migration-sequence]
+
+1. Prepare `migration.conf`.
+2. Run dry-run.
+3. Run full migration.
+4. Verify site and admin.
+5. Share issues or success notes in Discussions.
+
+
+# Migration Flow (/docs/migration-flow)
+
+
+
+## High-level flow [#high-level-flow]
+
+1. Validate input options and dependencies.
+2. Transfer files with rsync (unless skipped).
+3. Export database on source.
+4. Import database on destination.
+5. Run URL replacement.
+6. Perform post-migration tasks.
+
+## Detailed steps [#detailed-steps]
+
+### 1) Validation [#1-validation]
+
+* Checks required options.
+* Checks local tools like `ssh` and `rsync`.
+* Checks remote tools and switches DB method if needed.
+
+### 2) File transfer [#2-file-transfer]
+
+* Uses rsync over SSH.
+* Supports `--exclude` patterns.
+* Can be skipped with `--skip-files`.
+
+### 3) Database transfer [#3-database-transfer]
+
+* Uses WP-CLI by default.
+* Falls back to mysqldump/mysql if WP-CLI unavailable.
+* Can be skipped with `--skip-db`.
+
+### 4) URL replacement [#4-url-replacement]
+
+* Uses `wp search-replace` for safe serialized replacement.
+* Can be skipped with `--skip-url-replace`.
+
+### 5) Finalization [#5-finalization]
+
+* Cache flush
+* Rewrite flush
+* Permissions hardening
+
+
+# Security Best Practices (/docs/security-best-practices)
+
+
+
+## SSH and access [#ssh-and-access]
+
+* Use SSH keys, not password prompts.
+* Use least-privileged deploy users.
+* Restrict access by IP when possible.
+
+## Dry-run first [#dry-run-first]
+
+Always run:
+
+```bash
+./wpclone --config migration.conf --dry-run
+```
+
+This catches missing paths and auth issues before any changes.
+
+## Protect sensitive data [#protect-sensitive-data]
+
+* Never commit real `.conf` files with secrets.
+* Keep `migration.conf.example` generic.
+* Redact hosts and credentials when sharing logs.
+
+## Validate target environment [#validate-target-environment]
+
+* Ensure destination has working `wp-config.php`.
+* Verify PHP and DB versions are compatible.
+* Confirm sufficient disk space before migration.
+
+## Post-migration checks [#post-migration-checks]
+
+* Verify homepage and wp-admin.
+* Check media and permalinks.
+* Check plugin/theme critical features.
+
+
+# Support and Discussions (/docs/support)
+
+
+
+## Report issues [#report-issues]
+
+Open an issue with:
+
+* exact command used (redacted)
+* local OS and Bash version
+* relevant `wpclone.log` output
+* source and destination environment details
+
+Issue tracker:
+
+[https://github.com/Vexxo-Dev/wpclone\_cli/issues](https://github.com/Vexxo-Dev/wpclone_cli/issues)
+
+## Discussions [#discussions]
+
+Use Discussions for:
+
+* setup questions
+* migration stories
+* feature ideas
+
+Discussions home:
+
+[https://github.com/Vexxo-Dev/wpclone\_cli/discussions](https://github.com/Vexxo-Dev/wpclone_cli/discussions)
+
+## Contribution [#contribution]
+
+See contribution guidelines in repository root:
+
+[https://github.com/Vexxo-Dev/wpclone\_cli/blob/main/CONTRIBUTING.md](https://github.com/Vexxo-Dev/wpclone_cli/blob/main/CONTRIBUTING.md)
+
+
+# Troubleshooting (/docs/troubleshooting)
+
+
+
+## Discussions page shows 404 [#discussions-page-shows-404]
+
+If category-specific URL fails, open Discussions home first:
+
+[https://github.com/Vexxo-Dev/wpclone\_cli/discussions](https://github.com/Vexxo-Dev/wpclone_cli/discussions)
+
+Possible reasons:
+
+* Not signed in to GitHub.
+* Direct category link changed.
+* Temporary repo visibility or permission issue.
+
+## SSH connection fails [#ssh-connection-fails]
+
+Check:
+
+* Host and user in `--src-host` and `--dst-host`.
+* SSH key permissions.
+* Firewall and port settings.
+
+Test manually:
+
+```bash
+ssh deploy@old-server.com
+```
+
+## wp command not found [#wp-command-not-found]
+
+wpclone automatically falls back to mysqldump/mysql when WP-CLI is missing.
+
+To force fallback mode:
+
+```bash
+./wpclone --config migration.conf --db-method mysqldump
+```
+
+## Migration failed unexpectedly [#migration-failed-unexpectedly]
+
+Run with debug mode:
+
+```bash
+WPCLONE_DEBUG=1 ./wpclone --config migration.conf --dry-run
+```
+
+Then inspect log output and re-run.
+
+
+# Usage (/docs/usage)
+
+
+
+## Usage [#usage]
+
+General syntax:
+
+```text
+wpclone [OPTIONS]
+wpclone --config migration.conf
+```
+
+## Required options [#required-options]
+
+* \--src-host
+* \--src-path
+* \--dst-host
+* \--dst-path
+* \--old-url
+* \--new-url
+
+## Common options [#common-options]
+
+* \--config
+* \--db-method wpcli or mysqldump
+* \--skip-files
+* \--skip-db
+* \--skip-url-replace
+* \--exclude
+* \--dry-run
+* \--verbose
+
+## Environment variables [#environment-variables]
+
+* `WPCLONE_DEBUG=1` enable debug output.
+* `WPCLONE_LOG=<path>` customize log file path.
+
+## Examples [#examples]
+
+### Full migration [#full-migration]
+
+```bash
+./wpclone \
+  --src-host deploy@old-server.com \
+  --src-path /var/www/html \
+  --dst-host deploy@new-server.com \
+  --dst-path /var/www/html \
+  --old-url https://old-site.com \
+  --new-url https://new-site.com
+```
+
+### Files only [#files-only]
+
+```bash
+./wpclone --config migration.conf --skip-db
+```
+
+### Database only [#database-only]
+
+```bash
+./wpclone --config migration.conf --skip-files
+```
+
+### Dry run [#dry-run]
+
+```bash
+WPCLONE_DEBUG=1 ./wpclone --config migration.conf --dry-run
+```
+
+## Recommended migration flow [#recommended-migration-flow]
+
+1. Prepare migration.conf with source and destination values
+2. Run dry-run and review output
+3. Run real migration
+4. Verify site URL and admin login
+5. Flush cache if needed

@@ -1,0 +1,11 @@
+# WP Clone Docs
+
+- [wpclone Documentation](/docs): Safer WordPress migrations with a clear CLI workflow
+- [Getting Started](/docs/getting-started): Requirements and first migration run
+- [Usage](/docs/usage): Required options, common flags, and migration commands
+- [Config File](/docs/config-file): Configure migration once and reuse everywhere
+- [Migration Flow](/docs/migration-flow): Understand exactly what wpclone does step by step
+- [Security Best Practices](/docs/security-best-practices): Safe operational checklist for migrations
+- [Troubleshooting](/docs/troubleshooting): Common problems and practical fixes
+- [FAQ](/docs/faq): Frequently asked questions about wpclone
+- [Support and Discussions](/docs/support): Where to report issues and share migration results
