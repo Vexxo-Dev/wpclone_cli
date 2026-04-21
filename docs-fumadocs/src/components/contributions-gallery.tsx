@@ -146,21 +146,8 @@ export function ContributionsGallery({ githubUrl, items }: ContributionsGalleryP
   }, []);
 
   const previewItems = useMemo(() => {
-    const real = items.slice(0, 6);
-    if (real.length >= 5) {
-      return real;
-    }
-
-    const demoFillers: ContributionItem[] = Array.from({ length: 5 - real.length }, (_, index) => ({
-      repo: `demo-${index + 1}`,
-      repoUrl: githubUrl,
-      imageUrl: `https://avatars.githubusercontent.com/u/${583231 + index * 17}?v=4`,
-      contributions: 0,
-      lastActivity: null,
-    }));
-
-    return [...real, ...demoFillers];
-  }, [items, githubUrl]);
+    return items.slice(0, 6);
+  }, [items]);
 
   useEffect(() => {
     let active = true;
@@ -168,13 +155,6 @@ export function ContributionsGallery({ githubUrl, items }: ContributionsGalleryP
     async function loadProfile() {
       if (!selectedProfile) {
         setProfileData(null);
-        return;
-      }
-
-      // Don't load profile for demo profiles
-      if (selectedProfile.repo.startsWith('demo-')) {
-        setProfileData(null);
-        setProfileLoading(false);
         return;
       }
 
@@ -412,11 +392,9 @@ export function ContributionsGallery({ githubUrl, items }: ContributionsGalleryP
         </div>
 
         <p className="terminal-card-body mt-3 text-xs">
-          {selectedProfile.repo.startsWith('demo-')
-            ? 'Demo profile - contribution placeholder.'
-            : profileLoading
-              ? 'Loading profile details...'
-              : profileData?.bio || 'No bio available for this profile.'}
+          {profileLoading
+            ? 'Loading profile details...'
+            : profileData?.bio || 'No bio available for this profile.'}
         </p>
 
         {profileData?.location ? (
