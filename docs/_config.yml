@@ -1,4 +1,4 @@
-title: wpclone
+title: WP Clone
 description: WordPress migration CLI using SSH, rsync, and WP-CLI
 theme: minima
 markdown: kramdown

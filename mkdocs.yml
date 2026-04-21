@@ -1,0 +1,56 @@
+site_name: WP Clone Docs (MkDocs Demo)
+site_description: WordPress migration CLI documentation
+site_url: https://vexxo-dev.github.io/wpclone_cli/
+
+repo_url: https://github.com/Vexxo-Dev/wpclone_cli
+repo_name: Vexxo-Dev/wpclone_cli
+
+theme:
+  name: material
+  language: en
+  logo: assets/logo.svg
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+    - header.autohide
+  font:
+    text: IBM Plex Sans
+    code: JetBrains Mono
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: teal
+      accent: amber
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+      primary: cyan
+      accent: amber
+
+docs_dir: mkdocs-demo
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Usage: usage.md
+  - Troubleshooting: troubleshooting.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+
+extra_css:
+  - stylesheets/extra.css

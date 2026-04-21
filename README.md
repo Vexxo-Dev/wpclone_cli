@@ -47,13 +47,13 @@
 
 ---
 
-## 📚 Documentation (GitHub Pages)
+## 📚 Documentation
 
-Project docs are available in the `docs/` folder and can be published with GitHub Pages.
+The main documentation is built with **FumaDocs** and is fully featured and interactive.
 
-- Docs entry page: [docs/index.md](docs/index.md)
-- Publishing instructions: [docs/publishing.md](docs/publishing.md)
-- Troubleshooting: [docs/troubleshooting.md](docs/troubleshooting.md)
+**👉 Visit the documentation:** [https://vexxo-dev.github.io/wpclone_cli/](https://vexxo-dev.github.io/wpclone_cli/)
+
+- Source code for docs: [`docs-fumadocs/`](docs-fumadocs/)
 
 ### On your local machine (where you run `wpclone`):
 - `bash` ≥ 4.0

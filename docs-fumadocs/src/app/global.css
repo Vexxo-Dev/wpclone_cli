@@ -1,0 +1,556 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+.terminal-font {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.landing-shell {
+  --landing-bg: #f4fbf8;
+  --landing-text: #0b3327;
+  --landing-grid: rgba(5, 150, 105, 0.14);
+  --landing-grid-2: rgba(6, 95, 70, 0.1);
+  --landing-scan: rgba(5, 150, 105, 0.1);
+  --landing-glow-a: rgba(16, 185, 129, 0.22);
+  --landing-glow-b: rgba(20, 184, 166, 0.2);
+  --landing-panel-bg: rgba(255, 255, 255, 0.68);
+  --landing-panel-border: rgba(6, 95, 70, 0.2);
+  --landing-panel-shadow: 0 0 60px rgba(16, 185, 129, 0.12);
+  --landing-kicker: rgba(6, 95, 70, 0.82);
+  --landing-heading: #042f2e;
+  --landing-body: rgba(8, 47, 40, 0.82);
+  --landing-code: rgba(6, 95, 70, 0.92);
+  --landing-command-bg: rgba(248, 255, 252, 0.72);
+  --landing-command-border: rgba(5, 150, 105, 0.22);
+  --landing-primary-bg: rgba(16, 185, 129, 0.18);
+  --landing-primary-border: rgba(5, 150, 105, 0.44);
+  --landing-primary-text: #064e3b;
+  --landing-primary-hover: rgba(16, 185, 129, 0.28);
+  --landing-secondary-bg: transparent;
+  --landing-secondary-border: rgba(6, 95, 70, 0.24);
+  --landing-secondary-text: #065f46;
+  --landing-secondary-hover: rgba(16, 185, 129, 0.1);
+  --landing-log-bg: rgba(243, 252, 247, 0.86);
+  --landing-log-border: rgba(6, 95, 70, 0.2);
+  --landing-card-bg: rgba(255, 255, 255, 0.7);
+  --landing-card-border: rgba(6, 95, 70, 0.2);
+  --landing-card-border-hover: rgba(5, 150, 105, 0.42);
+  --landing-card-shadow: 0 0 28px rgba(16, 185, 129, 0.08);
+  --landing-badge-bg: rgba(16, 185, 129, 0.14);
+  --landing-badge-border: rgba(6, 95, 70, 0.26);
+  --landing-badge-text: #065f46;
+  --landing-card-title: #042f2e;
+  --landing-card-body: rgba(8, 47, 40, 0.8);
+  --landing-stat-bg: rgba(240, 253, 246, 0.8);
+  --landing-stat-border: rgba(6, 95, 70, 0.18);
+  --landing-stat-label: rgba(6, 95, 70, 0.74);
+  --landing-stat-value: #064e3b;
+  --landing-contrib-bg: rgba(243, 253, 248, 0.82);
+  --landing-contrib-border: rgba(6, 95, 70, 0.18);
+  --landing-contrib-btn-bg: rgba(16, 185, 129, 0.16);
+  --landing-contrib-btn-border: rgba(6, 95, 70, 0.24);
+  --landing-contrib-btn-text: #065f46;
+  --landing-modal-overlay: rgba(2, 12, 9, 0.58);
+  --landing-modal-bg: rgba(252, 255, 254, 0.96);
+  --landing-modal-border: rgba(6, 95, 70, 0.2);
+  --landing-modal-close-bg: rgba(16, 185, 129, 0.14);
+  --landing-modal-close-border: rgba(6, 95, 70, 0.2);
+  --landing-modal-close-text: #065f46;
+  --landing-profile-link-bg: rgba(16, 185, 129, 0.1);
+  --landing-profile-link-border: rgba(6, 95, 70, 0.18);
+  --landing-profile-link-text: #064e3b;
+  background: var(--landing-bg);
+  color: var(--landing-text);
+}
+
+.dark .landing-shell {
+  --landing-bg: #030712;
+  --landing-text: #d1fae5;
+  --landing-grid: rgba(16, 185, 129, 0.1);
+  --landing-grid-2: rgba(16, 185, 129, 0.08);
+  --landing-scan: rgba(16, 185, 129, 0.08);
+  --landing-glow-a: rgba(16, 185, 129, 0.35);
+  --landing-glow-b: rgba(34, 211, 238, 0.24);
+  --landing-panel-bg: rgba(0, 0, 0, 0.45);
+  --landing-panel-border: rgba(110, 231, 183, 0.26);
+  --landing-panel-shadow: 0 0 60px rgba(16, 185, 129, 0.14);
+  --landing-kicker: rgba(110, 231, 183, 0.85);
+  --landing-heading: #ecfdf5;
+  --landing-body: rgba(209, 250, 229, 0.82);
+  --landing-code: rgba(167, 243, 208, 0.92);
+  --landing-command-bg: rgba(0, 0, 0, 0.55);
+  --landing-command-border: rgba(110, 231, 183, 0.22);
+  --landing-primary-bg: rgba(110, 231, 183, 0.15);
+  --landing-primary-border: rgba(110, 231, 183, 0.35);
+  --landing-primary-text: #ecfdf5;
+  --landing-primary-hover: rgba(110, 231, 183, 0.25);
+  --landing-secondary-bg: transparent;
+  --landing-secondary-border: rgba(110, 231, 183, 0.24);
+  --landing-secondary-text: rgba(209, 250, 229, 0.95);
+  --landing-secondary-hover: rgba(16, 185, 129, 0.1);
+  --landing-log-bg: rgba(2, 5, 8, 0.9);
+  --landing-log-border: rgba(110, 231, 183, 0.18);
+  --landing-card-bg: rgba(0, 0, 0, 0.45);
+  --landing-card-border: rgba(110, 231, 183, 0.2);
+  --landing-card-border-hover: rgba(167, 243, 208, 0.45);
+  --landing-card-shadow: 0 0 30px rgba(16, 185, 129, 0.09);
+  --landing-badge-bg: rgba(74, 222, 128, 0.1);
+  --landing-badge-border: rgba(110, 231, 183, 0.25);
+  --landing-badge-text: #d1fae5;
+  --landing-card-title: #ecfdf5;
+  --landing-card-body: rgba(209, 250, 229, 0.75);
+  --landing-stat-bg: rgba(5, 19, 15, 0.72);
+  --landing-stat-border: rgba(110, 231, 183, 0.18);
+  --landing-stat-label: rgba(167, 243, 208, 0.76);
+  --landing-stat-value: #ecfdf5;
+  --landing-contrib-bg: rgba(5, 19, 15, 0.7);
+  --landing-contrib-border: rgba(110, 231, 183, 0.18);
+  --landing-contrib-btn-bg: rgba(16, 185, 129, 0.15);
+  --landing-contrib-btn-border: rgba(110, 231, 183, 0.22);
+  --landing-contrib-btn-text: rgba(209, 250, 229, 0.95);
+  --landing-modal-overlay: rgba(0, 0, 0, 0.7);
+  --landing-modal-bg: rgba(4, 11, 10, 0.98);
+  --landing-modal-border: rgba(110, 231, 183, 0.22);
+  --landing-modal-close-bg: rgba(16, 185, 129, 0.13);
+  --landing-modal-close-border: rgba(110, 231, 183, 0.22);
+  --landing-modal-close-text: #d1fae5;
+  --landing-profile-link-bg: rgba(16, 185, 129, 0.12);
+  --landing-profile-link-border: rgba(110, 231, 183, 0.2);
+  --landing-profile-link-text: #d1fae5;
+}
+
+.terminal-main-panel,
+.terminal-side-panel {
+  border: 1px solid var(--landing-panel-border);
+  background: var(--landing-panel-bg);
+  box-shadow: var(--landing-panel-shadow);
+}
+
+.terminal-kicker {
+  color: var(--landing-kicker);
+}
+
+.terminal-heading {
+  color: var(--landing-heading);
+}
+
+.terminal-body {
+  color: var(--landing-body);
+}
+
+.terminal-command-box {
+  border: 1px solid var(--landing-command-border);
+  background: var(--landing-command-bg);
+}
+
+.terminal-code {
+  color: var(--landing-code);
+}
+
+.terminal-primary-btn {
+  border: 1px solid var(--landing-primary-border);
+  background: var(--landing-primary-bg);
+  color: var(--landing-primary-text);
+}
+
+.terminal-primary-btn:hover {
+  background: var(--landing-primary-hover);
+}
+
+.terminal-secondary-btn {
+  border: 1px solid var(--landing-secondary-border);
+  background: var(--landing-secondary-bg);
+  color: var(--landing-secondary-text);
+}
+
+.terminal-secondary-btn:hover {
+  background: var(--landing-secondary-hover);
+}
+
+.terminal-log-box {
+  border: 1px solid var(--landing-log-border);
+  background: var(--landing-log-bg);
+  color: var(--landing-body);
+}
+
+.terminal-highlight-card {
+  border: 1px solid var(--landing-card-border);
+  background: var(--landing-card-bg);
+  box-shadow: var(--landing-card-shadow);
+}
+
+.terminal-highlight-card:hover {
+  border-color: var(--landing-card-border-hover);
+}
+
+.terminal-icon-badge {
+  border: 1px solid var(--landing-badge-border);
+  background: var(--landing-badge-bg);
+  color: var(--landing-badge-text);
+}
+
+.terminal-card-title {
+  color: var(--landing-card-title);
+}
+
+.terminal-card-body {
+  color: var(--landing-card-body);
+}
+
+.terminal-stat-card {
+  border: 1px solid var(--landing-stat-border);
+  background: var(--landing-stat-bg);
+}
+
+.terminal-stat-label {
+  color: var(--landing-stat-label);
+}
+
+.terminal-stat-value {
+  color: var(--landing-stat-value);
+}
+
+.terminal-contrib-panel {
+  border: 1px solid var(--landing-contrib-border);
+  background: var(--landing-contrib-bg);
+}
+
+.terminal-contrib-viewall {
+  border: 1px solid var(--landing-contrib-btn-border);
+  background: var(--landing-contrib-btn-bg);
+  color: var(--landing-contrib-btn-text);
+}
+
+.terminal-contrib-thumb {
+  border: 1px solid var(--landing-contrib-border);
+}
+
+.terminal-contrib-stack {
+  display: flex;
+  align-items: center;
+}
+
+.terminal-contrib-avatar {
+  height: 2.25rem;
+  width: 2.25rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 2px solid var(--landing-contrib-border);
+  margin-left: -0.45rem;
+  box-shadow: 0 0 0 1px var(--landing-bg);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.terminal-contrib-avatar:first-child {
+  margin-left: 0;
+}
+
+.terminal-contrib-avatar:hover {
+  transform: translateY(-2px);
+  border-color: var(--landing-card-border-hover);
+}
+
+.terminal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--landing-modal-overlay);
+  animation: modalOverlayEnter 0.2s ease-out forwards;
+}
+
+.terminal-modal-overlay.is-closing {
+  animation: modalOverlayExit 0.2s ease-in forwards;
+}
+
+.terminal-modal-box {
+  width: min(880px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border: 1px solid var(--landing-modal-border);
+  border-radius: 1.25rem;
+  background: var(--landing-modal-bg);
+  padding: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalBoxEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.terminal-modal-overlay.is-closing .terminal-modal-box {
+  animation: modalBoxExit 0.2s ease-in forwards;
+}
+
+.terminal-modal-box-main {
+  width: min(960px, 100%);
+}
+
+.terminal-modal-box-profile {
+  width: min(430px, 100%);
+  z-index: 81;
+}
+
+.terminal-modal-overlay-second {
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.terminal-modal-content {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 700px) {
+  .terminal-modal-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.terminal-contrib-row {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 0.75rem;
+  border: 1px solid var(--landing-contrib-border);
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  background: transparent;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.terminal-contrib-row:hover {
+  border-color: var(--landing-card-border-hover);
+  transform: translateY(-1px);
+}
+
+.terminal-contrib-row.is-selected {
+  border-color: var(--landing-card-border-hover);
+}
+
+.terminal-contrib-close {
+  border: 1px solid var(--landing-modal-close-border);
+  background: var(--landing-modal-close-bg);
+  color: var(--landing-modal-close-text);
+  transition: all 0.2s ease;
+}
+
+.terminal-contrib-close:hover {
+  background: var(--landing-primary-hover);
+  border-color: var(--landing-primary-border);
+  transform: translateY(-1px);
+}
+
+.terminal-profile-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--landing-profile-link-border);
+  background: var(--landing-profile-link-bg);
+  color: var(--landing-profile-link-text);
+  border-radius: 0.75rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.terminal-profile-link:hover {
+  background: var(--landing-primary-hover);
+  border-color: var(--landing-primary-border);
+  transform: translateY(-2px);
+}
+
+.terminal-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--landing-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--landing-grid-2) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.34;
+  animation: terminal-grid-move 14s linear infinite;
+}
+
+.terminal-scanline {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, var(--landing-scan) 50%, transparent 100%);
+  background-size: 100% 6px;
+  opacity: 0.26;
+  animation: terminal-scan 9s linear infinite;
+}
+
+.terminal-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+}
+
+.terminal-glow-a {
+  top: -90px;
+  left: 12%;
+  width: 280px;
+  height: 280px;
+  background: var(--landing-glow-a);
+  animation: terminal-float 8s ease-in-out infinite, terminal-pulse 4.5s ease-in-out infinite;
+}
+
+.terminal-glow-b {
+  right: 6%;
+  bottom: 2%;
+  width: 340px;
+  height: 340px;
+  background: var(--landing-glow-b);
+  animation: terminal-float 11s ease-in-out infinite reverse, terminal-pulse 6s ease-in-out infinite;
+}
+
+.terminal-caret {
+  display: inline-block;
+  color: var(--landing-kicker);
+  animation: terminal-blink 0.95s steps(1, end) infinite;
+}
+
+.terminal-log-line {
+  display: block;
+  width: 0;
+  max-width: var(--log-chars, 32ch);
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 1px solid var(--landing-kicker);
+  animation: terminal-type-line 1.2s steps(40, end) forwards;
+}
+
+.terminal-log-delay-1 {
+  animation-delay: 0.2s;
+}
+
+.terminal-log-delay-2 {
+  animation-delay: 1.55s;
+}
+
+.terminal-log-delay-3 {
+  animation-delay: 2.9s;
+}
+
+.terminal-log-delay-4 {
+  animation-delay: 4.25s;
+}
+
+.terminal-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: terminal-reveal 0.7s ease forwards;
+}
+
+.terminal-reveal-delay-1 {
+  animation-delay: 0.16s;
+}
+
+.terminal-reveal-delay-2 {
+  animation-delay: 0.28s;
+}
+
+.terminal-reveal-delay-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes terminal-grid-move {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(44px);
+  }
+}
+
+@keyframes terminal-scan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 100%;
+  }
+}
+
+@keyframes terminal-float {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-14px) translateX(10px);
+  }
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+}
+
+@keyframes terminal-pulse {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes terminal-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes terminal-reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes terminal-type-line {
+  from {
+    width: 0;
+    border-right-color: var(--landing-kicker);
+  }
+  to {
+    width: var(--log-chars, 32ch);
+    border-right-color: transparent;
+  }
+}
+
+@keyframes modalOverlayEnter {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(5px); }
+}
+
+@keyframes modalOverlayExit {
+  from { opacity: 1; backdrop-filter: blur(5px); }
+  to { opacity: 0; backdrop-filter: blur(0px); }
+}
+
+@keyframes modalBoxEnter {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes modalBoxExit {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.96) translateY(5px); }
+}

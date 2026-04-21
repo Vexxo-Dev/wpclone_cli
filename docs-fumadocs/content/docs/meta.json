@@ -1,0 +1,14 @@
+{
+  "title": "WP Clone Docs",
+  "pages": [
+    "index",
+    "getting-started",
+    "usage",
+    "config-file",
+    "migration-flow",
+    "security-best-practices",
+    "troubleshooting",
+    "faq",
+    "support"
+  ]
+}
