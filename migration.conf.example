@@ -44,10 +44,19 @@ SKIP_URL_REPLACE=0
 # ── Rsync Excludes ────────────────────────────────────────────────────────────
 # Add one EXCLUDE line per pattern to exclude from the file transfer.
 # The following defaults are always excluded (no need to add them here):
-#   .git, wp-content/cache, wp-content/upgrade, *.log
+#   .git, wp-content/cache, wp-content/upgrade, wp-content/upgrade-temp-backup,
+#   wp-content/litespeed, wp-content/backups-dup-lite, *.log, /wp-config.php
 #
 # EXCLUDE=wp-content/uploads/large-video-folder
 # EXCLUDE=wp-content/plugins/some-plugin
+
+# Set to 1 to also copy the source wp-config.php (default 0: the destination
+# keeps its own wp-config.php and DB credentials)
+INCLUDE_WP_CONFIG=0
+
+# Set to 0 to skip the extra search-replace of JSON-escaped URLs
+# (https:\/\/old → https:\/\/new), which Elementor uses in _elementor_data
+REPLACE_JSON_URLS=1
 
 # ── Misc ──────────────────────────────────────────────────────────────────────
 # Set to 1 to enable verbose rsync output

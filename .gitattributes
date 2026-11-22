@@ -1,0 +1,5 @@
+# Shell scripts must keep LF endings — a Windows checkout with CRLF breaks
+# them ("$'\r': command not found", "set: pipefail\r: invalid option name").
+*.sh   text eol=lf
+*.bats text eol=lf
+*.conf.example text eol=lf
