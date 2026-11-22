@@ -642,7 +642,12 @@ post_migration_checks() {
     info "Flushing WordPress cache and rewrite rules"
     ssh_dst "wp --path='${DST_PATH}' cache flush --allow-root 2>/dev/null || true"
     ssh_dst "wp --path='${DST_PATH}' rewrite flush --allow-root 2>/dev/null || true"
-    success "Cache and rewrite rules flushed"
+    # Transients cached before the search-replace still hold rendered HTML with
+    # the OLD URL (e.g. image src in widget output) — drop them all.
+    ssh_dst "wp --path='${DST_PATH}' transient delete --all --allow-root 2>/dev/null || true"
+    # Elementor's generated CSS files can embed old URLs too; regenerate them.
+    ssh_dst "wp --path='${DST_PATH}' elementor flush-css --allow-root 2>/dev/null || true"
+    success "Cache, transients, Elementor CSS and rewrite rules flushed"
 
     # Print site core info
     info "Destination site info:"
