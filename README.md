@@ -147,6 +147,8 @@ wpclone --config <file>
 | `--dst-key <path>` | SSH private key for destination |
 | `--db-method <m>` | `wpcli` (default) or `mysqldump` |
 | `--exclude <pattern>` | Rsync exclude pattern (repeatable) |
+| `--include-wp-config` | Also copy `wp-config.php` (excluded by default so the destination keeps its own DB credentials) |
+| `--no-json-urls` | Skip the extra search-replace of JSON-escaped URLs (`https:\/\/old` → `https:\/\/new`, used by Elementor) |
 | `--skip-files` | Skip rsync transfer (DB only) |
 | `--skip-db` | Skip database migration (files only) |
 | `--skip-url-replace` | Skip search-and-replace after import |
@@ -240,7 +242,8 @@ DRY_RUN=0
 │  4. Import DB: scp to destination → wp db import / mysql│
 │                                                         │
 │  5. wp search-replace: old URL → new URL                │
-│     (handles serialized PHP safely)                     │
+│     (handles serialized PHP safely), then the           │
+│     JSON-escaped form https:\/\/old → https:\/\/new     │
 │                                                         │
 │  6. Post-migration:                                     │
 │     - wp cache flush                                    │
@@ -256,6 +259,8 @@ DRY_RUN=0
 - SSH `BatchMode=yes` is used — no interactive password prompts. Use SSH keys.
 - `wp-config.php` is set to `chmod 600` on the destination after migration.
 - Database credentials are never written to local disk (only the dump file is, in `/tmp`).
+- In `mysqldump` mode the DB password is sent over SSH stdin into `MYSQL_PWD`, so it never appears in a command line, `ps` output, or `wpclone.log`.
+- The source `wp-config.php` is not copied by default, so the destination's DB credentials are never overwritten.
 - The local staging area is always cleaned up on exit (even on error).
 
 ---

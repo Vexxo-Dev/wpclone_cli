@@ -51,7 +51,11 @@ error()   { printf '%s[ERROR]%s %s\n'  "$RED"    "$RESET" "$*" >&2; _log ERROR "
 fatal()   { error "$*"; cleanup; exit 1; }
 step()    { printf '\n%s%s▶ %s%s\n' "$BOLD" "$CYAN" "$*" "$RESET"; _log STEP  "$*"; }
 debug()   {
-  [[ "${WPCLONE_DEBUG:-0}" == "1" ]] && printf '%s[DEBUG] %s%s\n' "$DIM" "$*" "$RESET"
+  # NOTE: `if` instead of `[[ ... ]] && ...` — under `set -e` a function whose
+  # last command is a false `&&` test returns 1 and silently kills the script.
+  if [[ "${WPCLONE_DEBUG:-0}" == "1" ]]; then
+    printf '%s[DEBUG] %s%s\n' "$DIM" "$*" "$RESET"
+  fi
   _log DEBUG "$*"
 }
 
@@ -85,6 +89,10 @@ ${BOLD}OPTIONAL:${RESET}
   --skip-db                   Skip database migration (files only)
   --skip-url-replace          Skip search-and-replace after import
   --exclude    <pattern>      Rsync exclude pattern (repeatable)
+  --include-wp-config         Also copy wp-config.php (excluded by default so the
+                              destination keeps its own DB credentials)
+  --no-json-urls              Skip the extra search-replace of JSON-escaped URLs
+                              (https:\/\/old → https:\/\/new, used by Elementor)
   --dry-run                   Simulate without making any changes
   --no-color                  Disable colored output
   --verbose                   Enable verbose rsync output
@@ -145,6 +153,8 @@ SKIP_DB=0
 SKIP_URL_REPLACE=0
 DRY_RUN=0
 VERBOSE=0
+INCLUDE_WP_CONFIG=0
+REPLACE_JSON_URLS=1
 EXCLUDES=()
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -179,6 +189,8 @@ load_config() {
       SKIP_URL_REPLACE) SKIP_URL_REPLACE="$value" ;;
       DRY_RUN)        DRY_RUN="$value"        ;;
       VERBOSE)        VERBOSE="$value"        ;;
+      INCLUDE_WP_CONFIG) INCLUDE_WP_CONFIG="$value" ;;
+      REPLACE_JSON_URLS) REPLACE_JSON_URLS="$value" ;;
       EXCLUDE)        EXCLUDES+=("$value")    ;;
       *)              warn "Unknown config key ignored: $key" ;;
     esac
@@ -189,7 +201,7 @@ load_config() {
 # Argument Parsing
 # ─────────────────────────────────────────────────────────────────────────────
 parse_args() {
-  [[ $# -eq 0 ]] && { usage; exit 0; }
+  if [[ $# -eq 0 ]]; then usage; exit 0; fi
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -211,6 +223,8 @@ parse_args() {
       --skip-url-replace) SKIP_URL_REPLACE=1; shift ;;
       --dry-run)      DRY_RUN=1;      shift   ;;
       --verbose)      VERBOSE=1;      shift   ;;
+      --include-wp-config) INCLUDE_WP_CONFIG=1; shift ;;
+      --no-json-urls) REPLACE_JSON_URLS=0; shift ;;
       --no-color)
         RED=''; YELLOW=''; GREEN=''; CYAN=''; BOLD=''; DIM=''; RESET=''
         shift ;;
@@ -230,16 +244,21 @@ parse_args() {
 validate_args() {
   local errors=0
   local check_fields=("SRC_HOST" "SRC_PATH" "DST_HOST" "DST_PATH")
-  [[ $SKIP_URL_REPLACE -eq 0 ]] && check_fields+=("OLD_URL" "NEW_URL")
+  if [[ $SKIP_URL_REPLACE -eq 0 ]]; then
+    check_fields+=("OLD_URL" "NEW_URL")
+  fi
 
   for field in "${check_fields[@]}"; do
     if [[ -z "${!field:-}" ]]; then
-      error "Missing required option: --${field//_/-,,} ($(echo "--${field}" | tr '[:upper:]' '[:lower:]' | tr '_' '-'))"
-      ((errors++))
+      error "Missing required option: $(echo "--${field}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')"
+      # NOTE: not ((errors++)) — that returns 1 when errors is 0 and trips set -e
+      errors=$((errors + 1))
     fi
   done
 
-  [[ $errors -gt 0 ]] && fatal "Validation failed. Run '$SCRIPT_NAME --help' for usage."
+  if [[ $errors -gt 0 ]]; then
+    fatal "Validation failed. Run '$SCRIPT_NAME --help' for usage."
+  fi
 
   # Normalize URLs (strip trailing slash)
   OLD_URL="${OLD_URL%/}"
@@ -257,35 +276,102 @@ validate_args() {
 # ─────────────────────────────────────────────────────────────────────────────
 # SSH Helper
 # ─────────────────────────────────────────────────────────────────────────────
-_ssh_opts() {
-  local host="$1" port="$2" key="${3:-}"
-  local opts=(
-    -o "StrictHostKeyChecking=no"
-    -o "BatchMode=yes"
-    -o "ConnectTimeout=15"
-    -p "$port"
-  )
-  [[ -n "$key" ]] && opts+=(-i "$key")
-  echo "${opts[@]}"
-}
-
 ssh_exec() {
   local target="$1"; shift
   local port="${1}"; shift
   local key="${1:-}"; shift
   local cmd="$*"
   debug "SSH [$target:$port] → $cmd"
-  # shellcheck disable=SC2046
   if [[ $DRY_RUN -eq 1 ]]; then
-    info "[DRY-RUN] Would run on $target: $cmd"
+    # stderr, so callers that capture stdout with $(...) don't get this text
+    info "[DRY-RUN] Would run on $target: $cmd" >&2
     return 0
   fi
-  # shellcheck disable=SC2046
-  ssh $(_ssh_opts "$target" "$port" "$key") "$target" "$cmd"
+  # Build options as an array. The script sets IFS=$'\n\t', so the old
+  # `ssh $(_ssh_opts ...)` was not split on spaces: all options reached ssh as
+  # ONE argument ("keyword stricthostkeychecking extra arguments").
+  local sshopts=(-o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=15 -p "$port")
+  if [[ -n "$key" ]]; then
+    sshopts+=(-i "$key")
+  fi
+  ssh "${sshopts[@]}" "$target" "$cmd"
 }
 
 ssh_src() { ssh_exec "$SRC_HOST" "$SRC_PORT" "$SRC_KEY" "$@"; }
 ssh_dst() { ssh_exec "$DST_HOST" "$DST_PORT" "$DST_KEY" "$@"; }
+
+# Single-quote a string for safe use inside a remote shell command.
+_sq() { local q="'" r="'\\''" s; s="${1//$q/$r}"; printf "'%s'" "$s"; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Database credential helpers
+# ─────────────────────────────────────────────────────────────────────────────
+# Read a wp-config.php define() on side "src" or "dst".
+# Tries `wp config get` first, then falls back to grepping wp-config.php.
+_wp_config_get() {
+  local side="$1" key="$2" path val=""
+  if [[ "$side" == "src" ]]; then path="$SRC_PATH"; else path="$DST_PATH"; fi
+  val=$("ssh_${side}" "wp --path=$(_sq "$path") config get ${key} --allow-root 2>/dev/null" 2>/dev/null) || val=""
+  if [[ -z "$val" ]]; then
+    val=$("ssh_${side}" "grep \"define.*${key}\" $(_sq "${path}/wp-config.php") | grep -oP \"'[^']+'\s*,\s*'\\K[^']*\" | head -n1" 2>/dev/null) || val=""
+  fi
+  printf '%s' "$val"
+}
+
+# Populate DBC_NAME / DBC_USER / DBC_PASS / DBC_HOST for side "src" or "dst".
+DBC_NAME="" DBC_USER="" DBC_PASS="" DBC_HOST=""
+_load_db_creds() {
+  local side="$1"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    DBC_NAME="<${side}_db_name>" DBC_USER="<${side}_db_user>" DBC_PASS="" DBC_HOST="localhost"
+    return 0
+  fi
+  DBC_NAME=$(_wp_config_get "$side" DB_NAME)
+  DBC_USER=$(_wp_config_get "$side" DB_USER)
+  DBC_PASS=$(_wp_config_get "$side" DB_PASSWORD)
+  DBC_HOST=$(_wp_config_get "$side" DB_HOST)
+  DBC_HOST="${DBC_HOST:-localhost}"
+  if [[ -z "$DBC_NAME" || -z "$DBC_USER" ]]; then
+    fatal "Could not determine DB credentials from ${side} wp-config.php"
+  fi
+}
+
+# mysql/mysqldump connection args (quoted for the remote shell) from DBC_*.
+# Handles DB_HOST values like "localhost:3306" and "localhost:/path/to.sock".
+# The password is NOT included — it is sent over stdin into MYSQL_PWD so it
+# never appears in argv, `ps` output, or wpclone.log.
+_mysql_conn_args() {
+  local host="$DBC_HOST" rest="" args
+  if [[ "$host" == *:* ]]; then
+    rest="${host#*:}"; host="${host%%:*}"
+  fi
+  args="-h $(_sq "$host") -u $(_sq "$DBC_USER")"
+  if [[ "$rest" =~ ^[0-9]+$ ]]; then
+    args+=" -P ${rest}"
+  elif [[ -n "$rest" ]]; then
+    args+=" --socket=$(_sq "$rest")"
+  fi
+  printf '%s' "$args"
+}
+
+# Remote prefix that reads the DB password from stdin into MYSQL_PWD.
+readonly _PWD_FROM_STDIN='IFS= read -r MYSQL_PWD; export MYSQL_PWD;'
+
+_mysqldump_export() {
+  local remote_dump="$1"
+  _load_db_creds src
+  info "Running mysqldump on source (database: ${DBC_NAME})"
+  ssh_src "${_PWD_FROM_STDIN} mysqldump $(_mysql_conn_args) --single-transaction --no-tablespaces --default-character-set=utf8mb4 $(_sq "$DBC_NAME") > $(_sq "$remote_dump") && test -s $(_sq "$remote_dump")" \
+    <<< "$DBC_PASS"
+}
+
+_mysql_import() {
+  local remote_dump="$1"
+  _load_db_creds dst
+  info "Running mysql import on destination (database: ${DBC_NAME})"
+  ssh_dst "${_PWD_FROM_STDIN} mysql $(_mysql_conn_args) --default-character-set=utf8mb4 $(_sq "$DBC_NAME") < $(_sq "$remote_dump")" \
+    <<< "$DBC_PASS"
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dependency Checks
@@ -298,10 +384,14 @@ check_local_deps() {
       success "$cmd found"
     else
       error "Required command not found locally: $cmd"
-      ((missing++))
+      missing=$((missing + 1))
     fi
   done
-  [[ $missing -gt 0 ]] && fatal "Install missing dependencies and retry."
+  # `if`, not `[[ ]] && fatal`: as the last line that returned 1 and set -e
+  # exited the whole script silently right after "ssh found / rsync found".
+  if [[ $missing -gt 0 ]]; then
+    fatal "Install missing dependencies and retry."
+  fi
 }
 
 check_remote_deps() {
@@ -342,10 +432,18 @@ transfer_files() {
     ".gitignore"
     "wp-content/cache"
     "wp-content/upgrade"
+    "wp-content/upgrade-temp-backup"
+    "wp-content/litespeed"
+    "wp-content/backups-dup-lite"
     "*.log"
     ".DS_Store"
     "Thumbs.db"
   )
+  # Never overwrite the destination's wp-config.php by default — it holds the
+  # destination's own DB credentials. Leading "/" anchors it to the WP root.
+  if [[ $INCLUDE_WP_CONFIG -ne 1 ]]; then
+    default_excludes+=("/wp-config.php")
+  fi
   for e in "${default_excludes[@]}"; do
     exclude_args+=("--exclude=${e}")
   done
@@ -357,16 +455,19 @@ transfer_files() {
   local rsync_ssh_opts=(
     "ssh -p ${SRC_PORT} -o StrictHostKeyChecking=no -o ConnectTimeout=15"
   )
-  [[ -n "$SRC_KEY" ]] && rsync_ssh_opts=("ssh -p ${SRC_PORT} -i ${SRC_KEY} -o StrictHostKeyChecking=no -o ConnectTimeout=15")
+  if [[ -n "$SRC_KEY" ]]; then
+    rsync_ssh_opts=("ssh -p ${SRC_PORT} -i ${SRC_KEY} -o StrictHostKeyChecking=no -o ConnectTimeout=15")
+  fi
 
   local rsync_flags=(-az --partial --progress)
-  [[ $VERBOSE -eq 1 ]] && rsync_flags+=(-v)
-  [[ $DRY_RUN -eq 1 ]] && rsync_flags+=(--dry-run)
+  if [[ $VERBOSE -eq 1 ]]; then rsync_flags+=(-v); fi
+  if [[ $DRY_RUN -eq 1 ]]; then rsync_flags+=(--dry-run); fi
 
   # Rsync destination SSH opts
-  local dst_transport=()
   local dst_ssh="ssh -p ${DST_PORT} -o StrictHostKeyChecking=no -o ConnectTimeout=15"
-  [[ -n "$DST_KEY" ]] && dst_ssh="ssh -p ${DST_PORT} -i ${DST_KEY} -o StrictHostKeyChecking=no -o ConnectTimeout=15"
+  if [[ -n "$DST_KEY" ]]; then
+    dst_ssh="ssh -p ${DST_PORT} -i ${DST_KEY} -o StrictHostKeyChecking=no -o ConnectTimeout=15"
+  fi
 
   # Strategy: src → local tmp → dst  OR  if src and dst are on different hosts,
   # we rsync src to local, then local to dst. Most secure approach without
@@ -401,36 +502,23 @@ export_database() {
 
   if [[ "$DB_METHOD" == "wpcli" ]]; then
     info "Using WP-CLI to export database"
-    ssh_src "wp --path='${SRC_PATH}' db export '${remote_dump}' --allow-root --quiet" \
-      || fatal "WP-CLI db export failed on source"
+    # On some Hostinger servers `wp db export` exits 255 with no output; also
+    # guard against it "succeeding" with an empty file. Fall back to mysqldump
+    # using credentials from `wp config get`.
+    if ! ssh_src "wp --path=$(_sq "$SRC_PATH") db export $(_sq "$remote_dump") --allow-root --quiet && test -s $(_sq "$remote_dump")"; then
+      warn "WP-CLI db export failed on source — falling back to mysqldump"
+      _mysqldump_export "$remote_dump" || fatal "mysqldump fallback export failed on source"
+    fi
   else
     info "Using mysqldump to export database"
-    # Read wp-config.php to get DB credentials
-    local db_name db_user db_pass db_host
-    db_name=$(ssh_src "grep \"define.*DB_NAME\" '${SRC_PATH}/wp-config.php' | grep -oP \"'[^']+'\s*,\s*'\\K[^']+\"" 2>/dev/null || true)
-    # Fallback: use wp-cli config get
-    if [[ -z "$db_name" ]]; then
-      db_name=$(ssh_src "wp --path='${SRC_PATH}' config get DB_NAME --allow-root" 2>/dev/null || true)
-      db_user=$(ssh_src "wp --path='${SRC_PATH}' config get DB_USER --allow-root" 2>/dev/null || true)
-      db_pass=$(ssh_src "wp --path='${SRC_PATH}' config get DB_PASSWORD --allow-root" 2>/dev/null || true)
-      db_host=$(ssh_src "wp --path='${SRC_PATH}' config get DB_HOST --allow-root" 2>/dev/null || "localhost")
-    else
-      db_user=$(ssh_src "grep \"define.*DB_USER\" '${SRC_PATH}/wp-config.php' | grep -oP \"'[^']+'\s*,\s*'\\K[^']+\"" 2>/dev/null || true)
-      db_pass=$(ssh_src "grep \"define.*DB_PASSWORD\" '${SRC_PATH}/wp-config.php' | grep -oP \"'[^']+'\s*,\s*'\\K[^']+\"" 2>/dev/null || true)
-      db_host=$(ssh_src "grep \"define.*DB_HOST\" '${SRC_PATH}/wp-config.php' | grep -oP \"'[^']+'\s*,\s*'\\K[^']+\"" 2>/dev/null || echo "localhost")
-    fi
-
-    [[ -z "$db_name" ]] && fatal "Could not determine DB credentials from source wp-config.php"
-
-    ssh_src "mysqldump -h'${db_host}' -u'${db_user}' -p'${db_pass}' '${db_name}' > '${remote_dump}'" \
-      || fatal "mysqldump export failed on source"
+    _mysqldump_export "$remote_dump" || fatal "mysqldump export failed on source"
   fi
 
   # Download the dump to local temp
   info "Downloading database dump to local staging"
   if [[ $DRY_RUN -eq 0 ]]; then
     local scp_opts=(-P "$SRC_PORT" -o "StrictHostKeyChecking=no" -o "BatchMode=yes")
-    [[ -n "$SRC_KEY" ]] && scp_opts+=(-i "$SRC_KEY")
+    if [[ -n "$SRC_KEY" ]]; then scp_opts+=(-i "$SRC_KEY"); fi
     scp "${scp_opts[@]}" "${SRC_HOST}:${remote_dump}" "${local_dump}" \
       || fatal "Failed to download database dump from source"
     # Cleanup remote temp dump
@@ -454,7 +542,7 @@ import_database() {
   info "Uploading database dump to destination"
   if [[ $DRY_RUN -eq 0 ]]; then
     local scp_opts=(-P "$DST_PORT" -o "StrictHostKeyChecking=no" -o "BatchMode=yes")
-    [[ -n "$DST_KEY" ]] && scp_opts+=(-i "$DST_KEY")
+    if [[ -n "$DST_KEY" ]]; then scp_opts+=(-i "$DST_KEY"); fi
     scp "${scp_opts[@]}" "${local_dump}" "${DST_HOST}:${remote_dump}" \
       || fatal "Failed to upload database dump to destination"
   else
@@ -463,28 +551,17 @@ import_database() {
 
   if [[ "$DB_METHOD" == "wpcli" ]]; then
     info "Using WP-CLI to import database"
-    ssh_dst "wp --path='${DST_PATH}' db import '${remote_dump}' --allow-root" \
-      || fatal "WP-CLI db import failed on destination"
+    if ! ssh_dst "wp --path=$(_sq "$DST_PATH") db import $(_sq "$remote_dump") --allow-root"; then
+      warn "WP-CLI db import failed on destination — falling back to mysql"
+      _mysql_import "$remote_dump" || fatal "mysql fallback import failed on destination"
+    fi
   else
     info "Using mysql to import database"
-    # Get dst DB credentials
-    local db_name db_user db_pass db_host
-    db_name=$(ssh_dst "wp --path='${DST_PATH}' config get DB_NAME --allow-root" 2>/dev/null \
-      || ssh_dst "grep \"define.*DB_NAME\" '${DST_PATH}/wp-config.php' | grep -oP \"'[^']+'\s*,\s*'\\K[^']+\"" 2>/dev/null || true)
-    db_user=$(ssh_dst "wp --path='${DST_PATH}' config get DB_USER --allow-root" 2>/dev/null \
-      || ssh_dst "grep \"define.*DB_USER\" '${DST_PATH}/wp-config.php' | grep -oP \"'[^']+'\s*,\s*'\\K[^']+\"" 2>/dev/null || true)
-    db_pass=$(ssh_dst "wp --path='${DST_PATH}' config get DB_PASSWORD --allow-root" 2>/dev/null \
-      || ssh_dst "grep \"define.*DB_PASSWORD\" '${DST_PATH}/wp-config.php' | grep -oP \"'[^']+'\s*,\s*'\\K[^']+\"" 2>/dev/null || true)
-    db_host=$(ssh_dst "wp --path='${DST_PATH}' config get DB_HOST --allow-root" 2>/dev/null || echo "localhost")
-
-    [[ -z "$db_name" ]] && fatal "Could not determine DB credentials from destination wp-config.php"
-
-    ssh_dst "mysql -h'${db_host}' -u'${db_user}' -p'${db_pass}' '${db_name}' < '${remote_dump}'" \
-      || fatal "mysql import failed on destination"
+    _mysql_import "$remote_dump" || fatal "mysql import failed on destination"
   fi
 
   # Cleanup remote temp dump
-  ssh_dst "rm -f '${remote_dump}'"
+  ssh_dst "rm -f $(_sq "$remote_dump")"
 
   success "Database import complete"
 }
@@ -492,6 +569,12 @@ import_database() {
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 4: URL Search & Replace
 # ─────────────────────────────────────────────────────────────────────────────
+_wp_search_replace() {
+  local from="$1" to="$2" extra=""
+  if [[ $DRY_RUN -eq 1 ]]; then extra=" --dry-run"; fi
+  ssh_dst "wp --path=$(_sq "$DST_PATH") search-replace $(_sq "$from") $(_sq "$to") --all-tables --allow-root --report-changed-only${extra}"
+}
+
 replace_urls() {
   step "Running URL search-and-replace: ${OLD_URL} → ${NEW_URL}"
 
@@ -500,34 +583,44 @@ replace_urls() {
     return 0
   fi
 
-  if [[ "$DB_METHOD" == "wpcli" ]]; then
+  # Use wp search-replace whenever wp-cli exists on the destination, regardless
+  # of DB_METHOD — sed on a SQL dump corrupts serialized PHP string lengths.
+  if ssh_dst "command -v wp" &>/dev/null; then
     info "Using WP-CLI search-replace (handles serialized PHP safely)"
-    ssh_dst "wp --path='${DST_PATH}' search-replace \
-      '${OLD_URL}' '${NEW_URL}' \
-      --all-tables \
-      --allow-root \
-      --report-changed-only \
-      $([ $DRY_RUN -eq 1 ] && echo '--dry-run')" \
-      || fatal "WP-CLI search-replace failed"
+    _wp_search_replace "$OLD_URL" "$NEW_URL" || fatal "WP-CLI search-replace failed"
+
+    # Elementor (and other JSON blobs, e.g. _elementor_data) store URLs with
+    # escaped slashes: https:\/\/old-site.com — the plain replace misses them.
+    if [[ $REPLACE_JSON_URLS -eq 1 ]]; then
+      local slash='/' esc='\/' old_json new_json
+      old_json="${OLD_URL//$slash/$esc}" new_json="${NEW_URL//$slash/$esc}"
+      info "Replacing JSON-escaped URLs: ${old_json} → ${new_json}"
+      _wp_search_replace "$old_json" "$new_json" || fatal "WP-CLI search-replace (JSON-escaped URLs) failed"
+    fi
   else
-    warn "WP-CLI not available — using sed-based URL replace (does NOT handle serialized data)"
+    warn "WP-CLI not available on destination — using sed-based URL replace (does NOT handle serialized data)"
     warn "Serialized data may become corrupt. Install WP-CLI on the destination for reliable replacement."
 
-    ssh_dst "sed -i 's|${OLD_URL}|${NEW_URL}|g' /tmp/wpclone_urlfix.tmp 2>/dev/null; \
-      wp --path='${DST_PATH}' db export /tmp/wpclone_urlfix.sql --allow-root 2>/dev/null || true; \
-      if [ -f /tmp/wpclone_urlfix.sql ]; then \
-        sed -i 's|${OLD_URL}|${NEW_URL}|g' /tmp/wpclone_urlfix.sql; \
-        wp --path='${DST_PATH}' db import /tmp/wpclone_urlfix.sql --allow-root; \
-        rm -f /tmp/wpclone_urlfix.sql; \
-      fi" \
+    _load_db_creds dst
+    local tmp="/tmp/wpclone_urlfix_$$.sql" conn old_re new_re
+    conn=$(_mysql_conn_args)
+    old_re=$(printf '%s' "$OLD_URL" | sed -e 's/[]\/$*.^|[]/\\&/g')
+    new_re=$(printf '%s' "$NEW_URL" | sed -e 's/[\/&|]/\\&/g')
+    ssh_dst "${_PWD_FROM_STDIN} \
+      mysqldump ${conn} --single-transaction --no-tablespaces --default-character-set=utf8mb4 $(_sq "$DBC_NAME") > $(_sq "$tmp") \
+      && sed -i $(_sq "s|${old_re}|${new_re}|g") $(_sq "$tmp") \
+      && mysql ${conn} --default-character-set=utf8mb4 $(_sq "$DBC_NAME") < $(_sq "$tmp"); \
+      rc=\$?; rm -f $(_sq "$tmp"); exit \$rc" <<< "$DBC_PASS" \
       || fatal "sed-based search-replace failed"
   fi
 
-  # Also update siteurl and home options directly just in case
-  if ! ssh_dst "wp --path='${DST_PATH}' option get siteurl --allow-root" &>/dev/null; then
+  # Verify siteurl after the replace
+  if [[ $DRY_RUN -eq 1 ]]; then
+    info "[DRY-RUN] Would verify siteurl == ${NEW_URL}"
+  elif ! ssh_dst "wp --path=$(_sq "$DST_PATH") option get siteurl --allow-root" &>/dev/null; then
     warn "Could not verify siteurl option post-replace (wp-cli may be unavailable)"
   else
-    local siteurl; siteurl=$(ssh_dst "wp --path='${DST_PATH}' option get siteurl --allow-root")
+    local siteurl; siteurl=$(ssh_dst "wp --path=$(_sq "$DST_PATH") option get siteurl --allow-root")
     if [[ "$siteurl" == "$NEW_URL" || "$siteurl" == "${NEW_URL}/" ]]; then
       success "siteurl confirmed: $siteurl"
     else
@@ -599,9 +692,15 @@ print_summary() {
   printf '  %s%-20s%s %s\n' "$BOLD" "Skip Files:"       "$RESET" "$([[ $SKIP_FILES -eq 1 ]] && echo yes || echo no)"
   printf '  %s%-20s%s %s\n' "$BOLD" "Skip DB:"          "$RESET" "$([[ $SKIP_DB -eq 1 ]] && echo yes || echo no)"
   printf '  %s%-20s%s %s\n' "$BOLD" "Skip URL Replace:" "$RESET" "$([[ $SKIP_URL_REPLACE -eq 1 ]] && echo yes || echo no)"
+  printf '  %s%-20s%s %s\n' "$BOLD" "Copy wp-config.php:" "$RESET" "$([[ $INCLUDE_WP_CONFIG -eq 1 ]] && echo yes || echo no)"
+  printf '  %s%-20s%s %s\n' "$BOLD" "JSON URL Replace:" "$RESET" "$([[ $REPLACE_JSON_URLS -eq 1 ]] && echo yes || echo no)"
   printf '  %s%-20s%s %s\n' "$BOLD" "Dry Run:"          "$RESET" "$([[ $DRY_RUN -eq 1 ]] && echo YES || echo no)"
   printf '\n'
-  [[ $DRY_RUN -eq 1 ]] && printf '  %s%sDRY RUN MODE — No changes will be made.%s\n\n' "$YELLOW" "$BOLD" "$RESET"
+  # `if`, not `[[ ]] && printf`: as the last line that made print_summary
+  # return 1 on every real run, and set -e stopped the script right here.
+  if [[ $DRY_RUN -eq 1 ]]; then
+    printf '  %s%sDRY RUN MODE — No changes will be made.%s\n\n' "$YELLOW" "$BOLD" "$RESET"
+  fi
 }
 
 confirm_proceed() {
