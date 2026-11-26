@@ -28,9 +28,13 @@ wpclone --config migration.conf
 - --skip-files
 - --skip-db
 - --skip-url-replace
+- --include-wp-config
+- --no-json-urls
 - --exclude
 - --dry-run
 - --verbose
+
+`wp-config.php` is excluded from file transfer by default so the destination keeps its own database credentials. Use `--include-wp-config` to override this. JSON-escaped URLs (used by Elementor) are replaced by default in addition to normal URLs; use `--no-json-urls` to skip that pass.
 
 ## Environment variables
 

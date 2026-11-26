@@ -24,6 +24,8 @@ This catches missing paths and auth issues before any changes.
 - Never commit real `.conf` files with secrets.
 - Keep `migration.conf.example` generic.
 - Redact hosts and credentials when sharing logs.
+- The source `wp-config.php` is excluded by default, preserving the destination's database credentials. Avoid `--include-wp-config` unless replacing that configuration is intentional.
+- Database passwords are passed to remote `mysqldump`/`mysql` through SSH stdin and `MYSQL_PWD`, not command-line arguments or `wpclone.log`.
 
 ## Validate target environment
 

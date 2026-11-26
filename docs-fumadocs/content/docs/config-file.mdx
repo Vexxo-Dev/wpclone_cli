@@ -29,6 +29,8 @@ NEW_URL=https://new-site.com
 DB_METHOD=wpcli
 VERBOSE=0
 DRY_RUN=0
+INCLUDE_WP_CONFIG=0
+REPLACE_JSON_URLS=1
 ```
 
 ## Notes
@@ -36,4 +38,6 @@ DRY_RUN=0
 - Use `key=value` format.
 - Lines starting with `#` are comments.
 - `EXCLUDE` can be repeated for multiple patterns.
+- By default, `.git`, cache and upgrade directories, LiteSpeed and Duplicator backups, log files, and the root `wp-config.php` are excluded from file transfer. Set `INCLUDE_WP_CONFIG=1` only if you intend to replace the destination's configuration and database credentials.
+- `REPLACE_JSON_URLS=1` (the default) also replaces JSON-escaped URLs used by Elementor. Set it to `0` to disable this additional replacement.
 - Unknown keys are ignored with warning output.

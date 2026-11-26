@@ -29,16 +29,23 @@ description: Understand exactly what wpclone does step by step
 ### 3) Database transfer
 
 - Uses WP-CLI by default.
-- Falls back to mysqldump/mysql if WP-CLI unavailable.
+- Falls back to `mysqldump`/`mysql` if WP-CLI is unavailable or its database export/import fails.
+- Sends database passwords over SSH stdin via `MYSQL_PWD`, rather than including them in command arguments or logs.
 - Can be skipped with `--skip-db`.
 
 ### 4) URL replacement
 
-- Uses `wp search-replace` for safe serialized replacement.
+- Uses `wp search-replace` for safe serialized replacement when WP-CLI is available on the destination.
+- Also replaces JSON-escaped URLs (for example, `https:\/\/old` → `https:\/\/new`) used by Elementor. This pass is enabled by default and can be disabled with `--no-json-urls`.
 - Can be skipped with `--skip-url-replace`.
 
 ### 5) Finalization
 
 - Cache flush
+- Deletes transients and flushes Elementor CSS
 - Rewrite flush
 - Permissions hardening
+
+## File transfer safety
+
+The destination's root `wp-config.php` is excluded by default to preserve its database credentials. Use `--include-wp-config` only when you intentionally want to copy the source configuration.
